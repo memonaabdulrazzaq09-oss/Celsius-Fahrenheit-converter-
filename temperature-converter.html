@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Pro Temperature Converter | Memona Abdul Razzaq</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;700;900&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0a0a0f;--surface:#12121c;--card:#1a1a2e;
+  --purple:#7c3aed;--violet:#a855f7;--neon:#e879f9;--cyan:#22d3ee;
+  --text:#e2e8f0;--muted:#94a3b8;--border:rgba(168,85,247,0.18);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Space Grotesk',sans-serif;min-height:100vh;background:var(--bg);color:var(--text);overflow-x:hidden}
+canvas{position:fixed;inset:0;z-index:0;pointer-events:none}
+
+.wrap{position:relative;z-index:1;max-width:480px;margin:0 auto;padding:1.5rem 1rem 3rem}
+
+/* HEADER */
+.header{text-align:center;padding:1.5rem 0 1rem}
+.header-icon{font-size:3rem;display:block;margin-bottom:0.5rem;filter:drop-shadow(0 0 20px rgba(232,121,249,0.7))}
+.header h1{font-family:'Orbitron',sans-serif;font-size:1.2rem;font-weight:900;
+  background:linear-gradient(90deg,var(--violet),var(--neon),var(--cyan));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  letter-spacing:0.1em;text-align:center}
+.header p{color:var(--muted);font-size:0.78rem;margin-top:0.3rem}
+
+/* TOP BAR */
+.top-bar{display:flex;justify-content:flex-end;margin-bottom:0.8rem}
+.toggle-btn{background:rgba(168,85,247,0.06);border:1px solid var(--border);
+  color:var(--muted);padding:0.4rem 1rem;border-radius:999px;cursor:pointer;
+  font-size:0.78rem;font-family:'Space Grotesk',sans-serif;transition:all 0.2s}
+.toggle-btn:hover{border-color:var(--violet);color:var(--violet)}
+
+/* CARD */
+.card{background:var(--card);border:1px solid var(--border);border-radius:20px;
+  padding:1.5rem;margin-bottom:1rem;position:relative;overflow:hidden;
+  backdrop-filter:blur(20px);
+  box-shadow:0 0 40px rgba(124,58,237,0.08),0 20px 40px rgba(0,0,0,0.4),inset 0 1px 0 rgba(255,255,255,0.05)}
+.card::before{content:'';position:absolute;top:0;left:20%;right:20%;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(168,85,247,0.4),transparent)}
+.card-label{font-size:0.7rem;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;
+  color:var(--neon);margin-bottom:1rem;display:flex;align-items:center;gap:0.4rem}
+.card-label::before{content:'✦';font-size:0.6rem}
+
+/* INPUT */
+.input-row{display:flex;gap:0.6rem;align-items:stretch;margin-bottom:1rem}
+.temp-input{flex:1;background:rgba(10,10,20,0.8);border:1.5px solid var(--border);
+  border-radius:14px;padding:0.9rem 1rem;
+  font-family:'Orbitron',monospace;font-size:1.6rem;font-weight:700;
+  color:var(--cyan);text-align:right;outline:none;transition:all 0.2s;
+  box-shadow:inset 0 3px 10px rgba(0,0,0,0.4);
+  text-shadow:0 0 10px rgba(34,211,238,0.5)}
+.temp-input:focus{border-color:rgba(168,85,247,0.5);box-shadow:inset 0 3px 10px rgba(0,0,0,0.4),0 0 20px rgba(124,58,237,0.12)}
+.temp-input::placeholder{color:#1a1a3a}
+.unit-badge{background:linear-gradient(135deg,rgba(124,58,237,0.2),rgba(232,121,249,0.1));
+  border:1px solid rgba(168,85,247,0.3);border-radius:12px;padding:0 1rem;
+  font-size:1.2rem;font-weight:700;color:var(--violet);
+  display:flex;align-items:center;justify-content:center;min-width:54px;
+  font-family:'Orbitron',sans-serif;text-shadow:0 0 10px rgba(168,85,247,0.5)}
+
+/* UNIT BUTTONS */
+.unit-btns{display:grid;grid-template-columns:repeat(4,1fr);gap:0.5rem}
+.ub{padding:0.6rem 0.3rem;border-radius:10px;border:1px solid var(--border);
+  background:rgba(10,10,20,0.5);color:var(--muted);font-size:0.7rem;font-weight:600;
+  cursor:pointer;transition:all 0.2s;font-family:'Space Grotesk',sans-serif;text-align:center}
+.ub:hover{border-color:rgba(168,85,247,0.4);color:var(--violet)}
+.ub.active{background:linear-gradient(135deg,rgba(124,58,237,0.2),rgba(232,121,249,0.08));
+  border-color:rgba(168,85,247,0.45);color:var(--neon);
+  box-shadow:0 0 12px rgba(168,85,247,0.15)}
+
+/* THERMOMETER */
+.thermo-wrap{display:flex;flex-direction:column;align-items:center}
+.thermo{width:30px;height:130px;background:rgba(10,10,20,0.8);border-radius:15px 15px 0 0;
+  border:1px solid var(--border);position:relative;overflow:hidden}
+.thermo-fill{position:absolute;bottom:0;left:0;right:0;
+  background:linear-gradient(180deg,var(--neon),var(--violet),var(--purple));
+  transition:height 0.6s cubic-bezier(0.34,1.56,0.64,1);
+  box-shadow:0 0 10px rgba(168,85,247,0.5)}
+.thermo-bulb{width:30px;height:30px;border-radius:50%;
+  background:radial-gradient(circle,var(--neon),var(--purple));
+  border:1px solid var(--border);margin-top:-1px;
+  box-shadow:0 0 15px rgba(232,121,249,0.5)}
+.thermo-labels{display:flex;flex-direction:column;justify-content:space-between;
+  height:130px;margin-left:6px;font-size:0.55rem;color:#2a2a4a;
+  font-family:'Orbitron',monospace;padding:3px 0}
+.thermo-temp-display{font-family:'Orbitron',monospace;font-size:1.4rem;font-weight:700;
+  background:linear-gradient(90deg,var(--violet),var(--neon));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  text-align:center;margin-top:0.5rem;filter:drop-shadow(0 0 8px rgba(232,121,249,0.4))}
+
+/* RESULTS */
+.results{display:flex;flex-direction:column;gap:0.5rem}
+.res{background:rgba(10,10,20,0.6);border:1px solid var(--border);
+  border-radius:12px;padding:0.7rem 0.8rem;
+  display:flex;align-items:center;justify-content:space-between;
+  cursor:pointer;transition:all 0.2s;position:relative;overflow:hidden}
+.res::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,var(--neon),transparent);opacity:0;transition:opacity 0.2s}
+.res:hover{border-color:rgba(168,85,247,0.3);background:rgba(20,10,40,0.7)}
+.res:hover::after{opacity:1}
+.res.active-unit{border-color:rgba(168,85,247,0.35);background:rgba(124,58,237,0.08)}
+.res-left{display:flex;align-items:center;gap:0.6rem}
+.res-emoji{font-size:1rem}
+.res-name{font-size:0.72rem;color:var(--muted);font-weight:500}
+.res-right{text-align:right}
+.res-val{font-family:'Orbitron',monospace;font-size:1rem;color:var(--text);
+  text-shadow:0 0 6px rgba(168,85,247,0.3)}
+.res-unit{font-size:0.6rem;color:var(--muted);margin-left:0.2rem}
+.copy-hint{font-size:0.55rem;color:#2a2a4a;margin-top:0.1rem}
+.copied-txt{font-size:0.55rem;color:var(--cyan);margin-top:0.1rem}
+
+/* FORMULA */
+.formula{margin-top:0.8rem;background:rgba(124,58,237,0.06);
+  border:1px solid rgba(168,85,247,0.1);border-left:2px solid var(--violet);
+  border-radius:0 8px 8px 0;padding:0.7rem 0.8rem;
+  font-size:0.72rem;color:#5a4a7a;line-height:1.7}
+
+/* PRESETS */
+.presets-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:0.5rem}
+.preset{background:rgba(10,10,20,0.5);border:1px solid var(--border);
+  border-radius:12px;padding:0.7rem 0.8rem;cursor:pointer;transition:all 0.2s}
+.preset:hover{border-color:rgba(168,85,247,0.35);background:rgba(124,58,237,0.08);
+  transform:translateY(-2px);box-shadow:0 4px 15px rgba(124,58,237,0.1)}
+.preset-icon{font-size:0.9rem;margin-bottom:0.2rem;display:block}
+.preset-name{font-size:0.68rem;color:var(--muted);margin-bottom:0.2rem}
+.preset-val{font-family:'Orbitron',monospace;font-size:0.85rem;color:var(--violet);
+  text-shadow:0 0 6px rgba(168,85,247,0.3)}
+
+/* HISTORY */
+.history-list{display:flex;flex-direction:column;gap:0.4rem;max-height:180px;overflow-y:auto}
+.history-list::-webkit-scrollbar{width:3px}
+.history-list::-webkit-scrollbar-thumb{background:rgba(168,85,247,0.25);border-radius:3px}
+.hist-item{background:rgba(10,10,20,0.4);border:1px solid var(--border);
+  border-radius:10px;padding:0.5rem 0.8rem;display:flex;justify-content:space-between;
+  align-items:center;cursor:pointer;transition:all 0.2s}
+.hist-item:hover{border-color:rgba(168,85,247,0.3);background:rgba(124,58,237,0.06)}
+.hist-from{font-family:'Orbitron',monospace;font-size:0.85rem;color:var(--violet)}
+.hist-to{font-size:0.65rem;color:var(--muted);text-align:right}
+.no-history{color:#3a3a5a;font-size:0.78rem;text-align:center;padding:1rem 0}
+.clear-btn{background:transparent;border:1px solid rgba(232,121,249,0.1);color:#3a2a4a;
+  padding:0.3rem 0.8rem;border-radius:8px;cursor:pointer;font-size:0.68rem;
+  font-family:'Space Grotesk',sans-serif;transition:all 0.2s;margin-left:auto;display:block;margin-bottom:0.5rem}
+.clear-btn:hover{border-color:rgba(232,121,249,0.3);color:rgba(232,121,249,0.6)}
+
+/* FACTS */
+.fact{background:linear-gradient(135deg,rgba(124,58,237,0.08),rgba(232,121,249,0.04));
+  border:1px solid rgba(168,85,247,0.12);border-radius:14px;
+  padding:0.9rem 1rem;font-size:0.78rem;color:#6a5a8a;line-height:1.7;
+  cursor:pointer;transition:all 0.3s}
+.fact:hover{border-color:rgba(168,85,247,0.25);color:#8a7aaa}
+.fact b{color:var(--cyan);text-shadow:0 0 8px rgba(34,211,238,0.4)}
+.fact-hint{font-size:0.6rem;color:#3a2a4a;margin-top:0.4rem}
+
+/* LIGHT MODE */
+body.light{--bg:#f8f0ff;--card:rgba(255,255,255,0.95);--border:rgba(124,58,237,0.2);
+  --text:#1a0a2e;--muted:#7a5a9a;--surface:#f0e8ff}
+body.light canvas{opacity:0.2}
+
+/* CREDIT */
+.credit{text-align:center;color:#2a1a3a;font-size:0.72rem;padding:1rem 0}
+.credit b{background:linear-gradient(90deg,var(--violet),var(--neon));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+</style>
+</head>
+<body>
+<canvas id="sparkCanvas"></canvas>
+
+<div class="wrap">
+  <div class="top-bar">
+    <button class="toggle-btn" onclick="toggleTheme()" id="themeBtn">☀️ Light Mode</button>
+  </div>
+
+  <div class="header">
+    <span class="header-icon">🌡️</span>
+    <h1>PRO TEMP CONVERTER</h1>
+    <p>Real-time · 4 Units · History · Presets · Formulas</p>
+  </div>
+
+  <!-- INPUT -->
+  <div class="card">
+    <div class="card-label">Enter Temperature</div>
+    <div class="input-row">
+      <input class="temp-input" id="tempInput" type="number" placeholder="0" oninput="convert()"/>
+      <div class="unit-badge" id="activeBadge">°C</div>
+    </div>
+    <div class="unit-btns">
+      <button class="ub active" onclick="selectUnit('C','°C',this)">°C<br><span style="font-size:0.55rem;opacity:0.5">Celsius</span></button>
+      <button class="ub" onclick="selectUnit('F','°F',this)">°F<br><span style="font-size:0.55rem;opacity:0.5">Fahrenheit</span></button>
+      <button class="ub" onclick="selectUnit('K','K',this)">K<br><span style="font-size:0.55rem;opacity:0.5">Kelvin</span></button>
+      <button class="ub" onclick="selectUnit('R','°R',this)">°R<br><span style="font-size:0.55rem;opacity:0.5">Rankine</span></button>
+    </div>
+  </div>
+
+  <!-- THERMOMETER + RESULTS -->
+  <div class="card">
+    <div class="card-label">Results</div>
+    <div style="display:flex;gap:1rem;align-items:flex-start">
+      <div class="thermo-wrap">
+        <div style="display:flex;gap:0.4rem;align-items:flex-end">
+          <div>
+            <div class="thermo"><div class="thermo-fill" id="thermoFill" style="height:40%"></div></div>
+            <div class="thermo-bulb"></div>
+          </div>
+          <div class="thermo-labels">
+            <span>100°</span><span>75°</span><span>50°</span><span>25°</span><span>0°</span>
+          </div>
+        </div>
+        <div class="thermo-temp-display" id="thermoDisplay">—</div>
+      </div>
+      <div class="results" style="flex:1">
+        <div class="res active-unit" id="res-C" onclick="copyVal('C')">
+          <div class="res-left"><span class="res-emoji">🥶</span><div class="res-name">Celsius</div></div>
+          <div class="res-right"><div class="res-val" id="val-C">—<span class="res-unit">°C</span></div><div class="copy-hint" id="hint-C">tap to copy</div></div>
+        </div>
+        <div class="res" id="res-F" onclick="copyVal('F')">
+          <div class="res-left"><span class="res-emoji">🌡️</span><div class="res-name">Fahrenheit</div></div>
+          <div class="res-right"><div class="res-val" id="val-F">—<span class="res-unit">°F</span></div><div class="copy-hint" id="hint-F">tap to copy</div></div>
+        </div>
+        <div class="res" id="res-K" onclick="copyVal('K')">
+          <div class="res-left"><span class="res-emoji">⚗️</span><div class="res-name">Kelvin</div></div>
+          <div class="res-right"><div class="res-val" id="val-K">—<span class="res-unit">K</span></div><div class="copy-hint" id="hint-K">tap to copy</div></div>
+        </div>
+        <div class="res" id="res-R" onclick="copyVal('R')">
+          <div class="res-left"><span class="res-emoji">🔬</span><div class="res-name">Rankine</div></div>
+          <div class="res-right"><div class="res-val" id="val-R">—<span class="res-unit">°R</span></div><div class="copy-hint" id="hint-R">tap to copy</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="formula" id="formulaBox">Enter a value to see the conversion formula ✨</div>
+  </div>
+
+  <!-- PRESETS -->
+  <div class="card">
+    <div class="card-label">Quick Presets</div>
+    <div class="presets-grid">
+      <div class="preset" onclick="setPreset(37,'C')"><span class="preset-icon">🧑</span><div class="preset-name">Body Temp</div><div class="preset-val">37°C</div></div>
+      <div class="preset" onclick="setPreset(100,'C')"><span class="preset-icon">💧</span><div class="preset-name">Boiling Point</div><div class="preset-val">100°C</div></div>
+      <div class="preset" onclick="setPreset(0,'C')"><span class="preset-icon">🧊</span><div class="preset-name">Freezing Point</div><div class="preset-val">0°C</div></div>
+      <div class="preset" onclick="setPreset(-40,'C')"><span class="preset-icon">❄️</span><div class="preset-name">C = F Point</div><div class="preset-val">-40°C</div></div>
+      <div class="preset" onclick="setPreset(21,'C')"><span class="preset-icon">🌤️</span><div class="preset-name">Room Temp</div><div class="preset-val">21°C</div></div>
+      <div class="preset" onclick="setPreset(0,'K')"><span class="preset-icon">🌌</span><div class="preset-name">Absolute Zero</div><div class="preset-val">0K</div></div>
+      <div class="preset" onclick="setPreset(5500,'C')"><span class="preset-icon">☀️</span><div class="preset-name">Sun Surface</div><div class="preset-val">5500°C</div></div>
+      <div class="preset" onclick="setPreset(38,'C')"><span class="preset-icon">🤒</span><div class="preset-name">Fever</div><div class="preset-val">38°C</div></div>
+    </div>
+  </div>
+
+  <!-- HISTORY -->
+  <div class="card">
+    <div class="card-label">Recent Conversions</div>
+    <button class="clear-btn" onclick="clearHistory()">Clear History</button>
+    <div class="history-list" id="historyList">
+      <div class="no-history">No conversions yet — start typing! ✨</div>
+    </div>
+  </div>
+
+  <!-- FACTS -->
+  <div class="card">
+    <div class="card-label">Did You Know?</div>
+    <div class="fact" onclick="nextFact()" id="factBox">
+      <b>-40°C = -40°F</b> — The only temperature where Celsius and Fahrenheit are equal! 🤯
+      <div class="fact-hint">tap for next fact →</div>
+    </div>
+  </div>
+
+  <p class="credit">Built by <b>Memona Abdul Razzaq</b> · As-Sa'adah Online Academy</p>
+</div>
+
+<script>
+// SPARKLES
+const sc=document.getElementById('sparkCanvas');
+const sctx=sc.getContext('2d');
+let SW,SH,parts=[];
+function sResize(){SW=sc.width=window.innerWidth;SH=sc.height=window.innerHeight;}
+sResize();window.addEventListener('resize',sResize);
+class Spark{
+  constructor(){this.reset()}
+  reset(){
+    this.x=Math.random()*SW;this.y=Math.random()*SH;
+    this.s=Math.random()*2+0.5;this.a=Math.random()*0.5+0.05;
+    this.da=(Math.random()*0.008+0.003)*(Math.random()>0.5?1:-1);
+    this.drift=(Math.random()-0.5)*0.15;
+    this.colors=['rgba(168,85,247,','rgba(232,121,249,','rgba(34,211,238,','rgba(255,255,255,','rgba(200,150,255,'];
+    this.c=this.colors[Math.floor(Math.random()*this.colors.length)];
+    this.isSp=Math.random()>0.72;
+  }
+  update(){this.a+=this.da;if(this.a<=0||this.a>=0.7)this.da*=-1;this.x+=this.drift;if(this.x<0||this.x>SW)this.reset();}
+  draw(){
+    if(this.isSp){
+      sctx.save();sctx.translate(this.x,this.y);sctx.globalAlpha=this.a;
+      const s=this.s*3;sctx.beginPath();
+      for(let i=0;i<4;i++){const a=(i/4)*Math.PI*2;sctx.lineTo(Math.cos(a)*s,Math.sin(a)*s);sctx.lineTo(Math.cos(a+Math.PI/4)*s*0.2,Math.sin(a+Math.PI/4)*s*0.2);}
+      sctx.closePath();sctx.fillStyle=this.c+this.a+')';sctx.shadowBlur=8;sctx.shadowColor=this.c+'1)';sctx.fill();sctx.restore();
+    } else {
+      sctx.beginPath();sctx.arc(this.x,this.y,this.s,0,Math.PI*2);
+      sctx.fillStyle=this.c+this.a+')';sctx.shadowBlur=this.s*4;sctx.shadowColor=this.c+'0.8)';sctx.fill();
+    }
+  }
+}
+for(let i=0;i<160;i++)parts.push(new Spark());
+function animSpark(){sctx.clearRect(0,0,SW,SH);parts.forEach(p=>{p.update();p.draw();});requestAnimationFrame(animSpark);}
+animSpark();
+
+// CONVERTER
+let fromUnit='C',history=[];
+const facts=[
+  '<b>-40°C = -40°F</b> — The only temperature where Celsius and Fahrenheit are equal! 🤯',
+  '<b>Absolute Zero = -273.15°C</b> — The coldest possible temperature in the universe! 🌌',
+  '<b>0 Kelvin</b> has no negative values — it starts from absolute zero! ⚗️',
+  '<b>Water boils at 100°C</b> but at high altitudes it boils at lower temperatures! 🏔️',
+  '<b>Normal body temp is 37°C (98.6°F)</b> — Fever starts above 38°C! 🤒',
+  '<b>The Sun surface is ~5500°C</b> — thats 9932°F! ☀️',
+  '<b>Rankine scale</b> starts at absolute zero like Kelvin but uses Fahrenheit degrees! 🔬',
+];
+let factIdx=0;
+function nextFact(){factIdx=(factIdx+1)%facts.length;document.getElementById('factBox').innerHTML=facts[factIdx]+'<div class="fact-hint">tap for next fact →</div>';}
+
+function selectUnit(u,badge,btn){
+  fromUnit=u;document.getElementById('activeBadge').textContent=badge;
+  document.querySelectorAll('.ub').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');convert();
+}
+function fmt(n){if(isNaN(n)||!isFinite(n))return '—';return parseFloat(n.toFixed(4)).toString();}
+function sym(u){return{C:'°C',F:'°F',K:'K',R:'°R'}[u]}
+function toC(v,u){if(u==='C')return v;if(u==='F')return(v-32)*5/9;if(u==='K')return v-273.15;if(u==='R')return(v-491.67)*5/9;}
+
+function convert(){
+  const raw=parseFloat(document.getElementById('tempInput').value);
+  if(isNaN(raw)){
+    ['C','F','K','R'].forEach(u=>document.getElementById('val-'+u).innerHTML='—<span class="res-unit">'+sym(u)+'</span>');
+    document.getElementById('formulaBox').textContent='Enter a value to see the conversion formula ✨';
+    document.getElementById('thermoDisplay').textContent='—';
+    document.getElementById('thermoFill').style.height='40%';return;
+  }
+  const c=toC(raw,fromUnit),f=c*9/5+32,k=c+273.15,r=f+459.67;
+  const vals={C:c,F:f,K:k,R:r};
+  Object.keys(vals).forEach(u=>{
+    document.getElementById('val-'+u).innerHTML=fmt(vals[u])+'<span class="res-unit">'+sym(u)+'</span>';
+    document.getElementById('res-'+u).classList.toggle('active-unit',u===fromUnit);
+  });
+  const pct=Math.max(0,Math.min(100,((c+50)/200)*100));
+  document.getElementById('thermoFill').style.height=pct+'%';
+  document.getElementById('thermoDisplay').textContent=fmt(c)+'°C';
+  const fEl=document.getElementById('thermoFill');
+  if(c<0)fEl.style.background='linear-gradient(180deg,#22d3ee,#0077aa)';
+  else if(c<37)fEl.style.background='linear-gradient(180deg,#a855f7,#7c3aed)';
+  else if(c<60)fEl.style.background='linear-gradient(180deg,#e879f9,#a855f7)';
+  else fEl.style.background='linear-gradient(180deg,#f472b6,#e879f9)';
+  const fm={
+    C:`(${raw} × 9/5) + 32 = ${fmt(f)}°F  |  ${raw} + 273.15 = ${fmt(k)}K`,
+    F:`(${raw} − 32) × 5/9 = ${fmt(c)}°C  |  ${fmt(c)} + 273.15 = ${fmt(k)}K`,
+    K:`${raw} − 273.15 = ${fmt(c)}°C  |  ${fmt(c)} × 9/5 + 32 = ${fmt(f)}°F`,
+    R:`(${raw} − 491.67) × 5/9 = ${fmt(c)}°C  |  ${fmt(c)} × 9/5 + 32 = ${fmt(f)}°F`,
+  };
+  document.getElementById('formulaBox').textContent=fm[fromUnit];
+  clearTimeout(window._ht);
+  window._ht=setTimeout(()=>{
+    history.unshift({raw,unit:fromUnit,c:fmt(c),f:fmt(f),k:fmt(k),t:new Date().toLocaleTimeString()});
+    if(history.length>10)history.pop();renderHistory();
+  },800);
+}
+function renderHistory(){
+  const el=document.getElementById('historyList');
+  if(!history.length){el.innerHTML='<div class="no-history">No conversions yet — start typing! ✨</div>';return;}
+  el.innerHTML=history.map(h=>`<div class="hist-item" onclick="setPreset(${h.raw},'${h.unit}')">
+    <div class="hist-from">${h.raw}${sym(h.unit)}</div>
+    <div class="hist-to">${h.c}°C · ${h.f}°F · ${h.k}K<br><span style="color:#2a1a4a">${h.t}</span></div>
+  </div>`).join('');
+}
+function clearHistory(){history=[];renderHistory();}
+function setPreset(v,u){
+  document.getElementById('tempInput').value=v;
+  const m={C:0,F:1,K:2,R:3};
+  document.querySelectorAll('.ub')[m[u]].click();
+}
+function copyVal(u){
+  const v=document.getElementById('val-'+u).textContent;
+  if(v.includes('—'))return;
+  navigator.clipboard.writeText(v).then(()=>{
+    const h=document.getElementById('hint-'+u);
+    h.textContent='✅ Copied!';h.className='copied-txt';
+    setTimeout(()=>{h.textContent='tap to copy';h.className='copy-hint';},1200);
+  });
+}
+let isLight=false;
+function toggleTheme(){
+  isLight=!isLight;
+  document.body.classList.toggle('light',isLight);
+  document.getElementById('themeBtn').textContent=isLight?'🌙 Dark Mode':'☀️ Light Mode';
+}
+</script>
+</body>
+</html>
